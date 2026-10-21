@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Estimate paint quantity, project costs, profit, and your customer quotation."
+    />
+    <title>Tektact | Painting Cost Calculator</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main" aria-label="Tektact Painting Cost Calculator home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none">
+            <path d="M9 11h22v8H9z" stroke="currentColor" stroke-width="2.5" />
+            <path d="M13 19v5h14v-5M20 24v10M15 34h10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M13 15h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="brand-name">tektact<span class="brand-period">.</span></span>
+      </a>
+      <div class="topbar-label"><span class="topbar-dot"></span> PAINTING COST CALCULATOR</div>
+      <div class="topbar-note">Made for your next estimate</div>
+    </header>
+
+    <main id="main" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div class="intro-copy">
+          <p class="eyebrow">PLAN YOUR PROJECT WITH CONFIDENCE</p>
+          <h1 id="page-title">A clear estimate.<br /><span>A confident quote.</span></h1>
+          <p class="intro-description">
+            Work out paint quantity, project costs, and a fair customer price in a few simple steps.
+          </p>
+        </div>
+        <div class="intro-note" aria-label="How the estimate works">
+          <span class="note-icon" aria-hidden="true">↗</span>
+          <span><strong>Simple from start to finish</strong><br />Your numbers update as you type.</span>
+        </div>
+      </section>
+
+      <section class="calculator-grid" aria-label="Painting project calculator">
+        <section class="card inputs-card" aria-labelledby="inputs-title">
+          <div class="card-heading">
+            <div>
+              <p class="section-kicker">01 / PROJECT DETAILS</p>
+              <h2 id="inputs-title">Your project inputs</h2>
+              <p class="muted">Start with the wall area, then add your rates.</p>
+            </div>
+            <span class="step-number" aria-hidden="true">01</span>
+          </div>
+
+          <div class="form-grid">
+            <div class="field field-wide">
+              <label for="wallArea">Total wall area</label>
+              <div class="input-wrap">
+                <input id="wallArea" name="wallArea" type="number" min="0.01" step="any" value="1200" inputmode="decimal" aria-describedby="wallArea-help wallArea-error" />
+                <span class="input-unit">sq ft</span>
+              </div>
+              <p class="field-help" id="wallArea-help">Add the combined area of all walls to paint.</p>
+              <p class="field-error" id="wallArea-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="paintCost">Paint cost per litre</label>
+              <div class="input-wrap">
+                <span class="input-prefix">₹</span>
+                <input id="paintCost" name="paintCost" type="number" min="0" step="any" value="450" inputmode="decimal" aria-describedby="paintCost-help paintCost-error" />
+                <span class="input-unit">/ litre</span>
+              </div>
+              <p class="field-help" id="paintCost-help">Your purchase price for one litre.</p>
+              <p class="field-error" id="paintCost-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="coverage">Coverage per litre</label>
+              <div class="input-wrap">
+                <input id="coverage" name="coverage" type="number" min="0.01" step="any" value="100" inputmode="decimal" aria-describedby="coverage-help coverage-error" />
+                <span class="input-unit">sq ft</span>
+              </div>
+              <p class="field-help" id="coverage-help">Check the paint tin for its coverage estimate.</p>
+              <p class="field-error" id="coverage-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="coats">Number of coats</label>
+              <div class="input-wrap">
+                <input id="coats" name="coats" type="number" min="1" step="1" value="2" inputmode="numeric" aria-describedby="coats-help coats-error" />
+                <span class="input-unit">coats</span>
+              </div>
+              <p class="field-help" id="coats-help">Most projects need two coats.</p>
+              <p class="field-error" id="coats-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="labourRate">Labour cost per sq ft</label>
+              <div class="input-wrap">
+                <span class="input-prefix">₹</span>
+                <input id="labourRate" name="labourRate" type="number" min="0" step="any" value="12" inputmode="decimal" aria-describedby="labourRate-help labourRate-error" />
+                <span class="input-unit">/ sq ft</span>
+              </div>
+              <p class="field-help" id="labourRate-help">Enter your labour rate for the full area.</p>
+              <p class="field-error" id="labourRate-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field">
+              <label for="otherExpenses">Other expenses</label>
+              <div class="input-wrap">
+                <span class="input-prefix">₹</span>
+                <input id="otherExpenses" name="otherExpenses" type="number" min="0" step="any" value="3500" inputmode="decimal" aria-describedby="otherExpenses-help otherExpenses-error" />
+              </div>
+              <p class="field-help" id="otherExpenses-help">Include travel, tools, or supplies.</p>
+              <p class="field-error" id="otherExpenses-error" aria-live="polite"></p>
+            </div>
+
+            <div class="field field-wide margin-field">
+              <div class="label-with-value">
+                <label for="margin">Target profit margin</label>
+                <span class="margin-hint">Share of your final quote</span>
+              </div>
+              <div class="input-wrap">
+                <input id="margin" name="margin" type="number" min="0" max="99.9" step="0.5" value="20" inputmode="decimal" aria-describedby="margin-help margin-error" />
+                <span class="input-unit">%</span>
+              </div>
+              <p class="field-help" id="margin-help">The profit percentage you want to keep from the final price.</p>
+              <p class="field-error" id="margin-error" aria-live="polite"></p>
+            </div>
+          </div>
+
+          <div class="inputs-footer">
+            <span class="secure-note"><span aria-hidden="true">●</span> Your estimate stays in this browser.</span>
+            <button class="text-button" id="resetButton" type="button">Reset example</button>
+          </div>
+        </section>
+
+        <section class="card estimate-card" aria-labelledby="estimate-title" aria-live="polite">
+          <div class="estimate-top">
+            <div>
+              <p class="section-kicker">02 / YOUR ESTIMATE</p>
+              <h2 id="estimate-title">Project summary</h2>
+            </div>
+            <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+          </div>
+
+          <div class="quantity-tile">
+            <div class="paint-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M12 15h24l-2 25H14l-2-25Z" fill="currentColor" opacity=".12" />
+                <path d="M12 15h24l-2 25H14l-2-25ZM11 15h26M16 10h16l2 5H14l2-5ZM17 22h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M24 25c-2 3-3 4.2-3 6a3 3 0 0 0 6 0c0-1.8-1-3-3-6Z" fill="currentColor" opacity=".8" />
+              </svg>
+            </div>
+            <div class="quantity-copy">
+              <span class="result-label">ESTIMATED PAINT QUANTITY</span>
+              <strong id="quantityOutput">24 <small>litres</small></strong>
+              <span class="result-subtext" id="quantityNote">For 1,200 sq ft across 2 coats</span>
+            </div>
+          </div>
+
+          <div class="breakdown-heading">
+            <span>Cost breakdown</span>
+            <span>Amount</span>
+          </div>
+          <dl class="breakdown-list">
+            <div class="breakdown-row">
+              <dt><span class="row-marker materials"></span>Paint materials</dt>
+              <dd id="materialsOutput">₹10,800</dd>
+            </div>
+            <div class="breakdown-row">
+              <dt><span class="row-marker labour"></span>Labour</dt>
+              <dd id="labourOutput">₹14,400</dd>
+            </div>
+            <div class="breakdown-row">
+              <dt><span class="row-marker expenses"></span>Other expenses</dt>
+              <dd id="expensesOutput">₹3,500</dd>
+            </div>
+          </dl>
+
+          <div class="project-total">
+            <span>Project cost <small>before profit</small></span>
+            <strong id="projectCostOutput">₹28,700</strong>
+          </div>
+
+          <div class="profit-row">
+            <span>Estimated profit <small id="actualMarginOutput">20% margin</small></span>
+            <strong id="profitOutput">₹7,175</strong>
+          </div>
+
+          <div class="quote-total">
+            <div>
+              <span class="quote-label">SUGGESTED QUOTATION</span>
+              <span class="quote-caption">Share this price with your customer</span>
+            </div>
+            <strong id="quoteOutput">₹35,875</strong>
+          </div>
+
+          <p class="formula-note"><span aria-hidden="true">i</span> Quote = project cost ÷ (1 − profit margin)</p>
+        </section>
+      </section>
+
+      <footer class="page-footer">
+        <span>Tektact <span aria-hidden="true">·</span> A practical tool for painting professionals</span>
+        <span>Estimates are a guide. Confirm rates and coverage before quoting.</span>
+      </footer>
+    </main>
+  </body>
+</html>

@@ -100,6 +100,8 @@ function updateEstimate() {
   document.getElementById("profitOutput").textContent = formatCurrency(profit);
   document.getElementById("actualMarginOutput").textContent = `${numberFormatter.format(actualMargin)}% margin`;
   document.getElementById("quoteOutput").textContent = formatCurrency(quotation);
+  const transfer = document.getElementById('quotationTransfer');
+  if (transfer) transfer.href = `quotation.html?area=${encodeURIComponent(inputs.wallArea)}&quote=${encodeURIComponent(quotation.toFixed(2))}`;
 }
 
 Object.keys(fieldRules).forEach((id) => {

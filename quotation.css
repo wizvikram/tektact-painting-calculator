@@ -97,7 +97,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .print-party { display: grid; grid-template-columns: 24mm 3mm minmax(0, 1fr); align-items: start; }
 .print-party-label, .print-party-colon { font-weight: 600; }
 .print-party-value { white-space: pre-wrap; overflow-wrap: anywhere; }
-.print-service-title { font-size: 15pt; line-height: 1.3; letter-spacing: .6px; margin: 0 0 4mm; }
+.print-service-title { font-size: 12pt; line-height: 1.3; letter-spacing: .6px; margin: 0 0 4mm; }
 .print-highlights, .print-scope, .print-terms-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .print-scope { margin-top: 4mm; }
 .print-document h2 { margin: 0 0 4mm; font-size: 11.5pt; line-height: 1.4; }

@@ -232,7 +232,7 @@ function restoreMeasurement() {
 
 function validateQuotation(displayErrors = true) {
   const errors = [];
-  const required = { date: "quotation date", reference: "quotation reference", contractor: "contractor name", client: "client name and address", scope: "scope of work", office: "verified office address", contact: "verified company contact details" };
+  const required = { date: "quotation date", contractor: "contractor name", client: "client name and address", scope: "scope of work", office: "verified office address", contact: "verified company contact details" };
   Object.entries(required).forEach(([id, label]) => {
     const control = $(id), invalid = !control.value.trim() || !control.validity.valid;
     control.setAttribute("aria-invalid", String(invalid));
@@ -253,26 +253,40 @@ function validateQuotation(displayErrors = true) {
   return errors.length === 0;
 }
 
-// Browsers clip native inputs/textarea contents in print. Text mirrors preserve
-// every line and wrap naturally across A4 pages without printing editor controls.
+// Build customer pages from an explicit allow-list. Internal identification stays
+// in the editor for future CRM integration and never enters the PDF or its title.
 function syncPrintContent() {
-  $("printDraft").hidden = validateQuotation(false);
-  document.querySelectorAll(".print-value").forEach((el) => el.remove());
-  document.querySelectorAll(".sheet input, .sheet textarea, .sheet select").forEach((input) => {
-    if (input.closest(".no-print")) return;
-    const value = document.createElement("div");
-    value.className = "print-value";
-    value.textContent = input.tagName === "SELECT" ? input.selectedOptions[0]?.textContent || "" : input.value.trim();
-    if (input.id === "date" && input.value) {
-      value.textContent = new Date(input.value + "T12:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
-    }
-    // Keep the exact editable numeric value: truncating a long rate or quantity
-    // here could make a customer's visible arithmetic disagree with the amount.
-    if (input.matches(".qty, .rate") && input.value) value.textContent = input.value;
-    input.after(value);
-  });
+  const draft = !validateQuotation(false);
+  const value = (id) => $(id).value.trim();
   const customer = $("client").value.trim().split("\n")[0].slice(0, 60);
-  document.title = ["TEKTACT Quotation", $("reference").value.trim(), customer].filter(Boolean).join(" - ");
+  document.title = ["TEKTACT Quotation", customer].filter(Boolean).join(" - ");
+  try {
+    window.TektactPrint.build({
+      date: value("date") ? new Date(value("date") + "T12:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "",
+      contractor: value("contractor"), client: value("client"), attention: value("attention"),
+      service: value("service"), highlights: value("highlights"), scope: value("scope"),
+      office: value("office"), contact: value("contact"), terms: value("terms"),
+      total: $("net").textContent, words: $("words").textContent, draft,
+      items: [...$("items").rows].map((row) => ({
+        description: row.querySelector(".desc").value.trim(),
+        unit: row.querySelector(".unit").value.trim(),
+        quantity: row.querySelector(".qty").value,
+        rate: row.querySelector(".rate").value,
+        amount: row.querySelector(".amt").textContent,
+        measurement: row.querySelector(".measurement-note").textContent,
+      })),
+    });
+    return true;
+  } catch (error) {
+    showErrors([error.message], true);
+    // Native browser printing cannot be cancelled from beforeprint. Print only
+    // an error warning if pagination fails, never a clipped customer quotation.
+    const warning = document.createElement("div");
+    warning.className = "draft-warning";
+    warning.textContent = "DRAFT - Unable to prepare A4 quotation. " + error.message;
+    $("printDocument").replaceChildren(warning);
+    return false;
+  }
 }
 
 function importCalculatorEstimate() {
@@ -305,7 +319,7 @@ $("applyMeasurement").addEventListener("click", applyMeasurement);
 $("targetRow").addEventListener("change", restoreMeasurement);
 $("print").addEventListener("click", () => {
   if (!validateQuotation()) return;
-  syncPrintContent(); window.print();
+  if (syncPrintContent()) window.print();
 });
 window.addEventListener("beforeprint", syncPrintContent);
 document.addEventListener("input", (event) => {

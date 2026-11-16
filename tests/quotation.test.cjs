@@ -54,7 +54,7 @@ async function measure(page, service, mode, values, deduction = 0) {
   if (await page.locator('#deduct').isEnabled()) await page.locator('#deduct').fill(String(deduction));
 }
 async function completeCustomer(page, service = 'Painting') {
-  for (const [id, value] of Object.entries({ date: '2026-11-16', reference: 'TEST-V1-' + service.toUpperCase(), client: 'TEST Customer\nTEST project address, Coimbatore', attention: 'TEST Customer Contact', phone: 'TEST phone', scope: service + ' scope for automated verification only.', highlights: 'TEST preparation and application methodology.', office: 'TEST office address - verification fixture only.', contact: 'TEST company contact - verification fixture only.' })) await page.locator('#' + id).fill(value);
+  for (const [id, value] of Object.entries({ date: '2026-11-16', reference: 'TEST-V1-' + service.toUpperCase(), client: 'TEST Customer\nTEST project address, Coimbatore', attention: 'TEST Customer Contact', scope: service + ' scope for automated verification only.', highlights: 'TEST preparation and application methodology.', office: 'TEST office address - verification fixture only.', contact: 'TEST company contact - verification fixture only.' })) await page.locator('#' + id).fill(value);
 }
 async function setItem(page, index, { description, unit = 'SFT', quantity, rate }) {
   const row = page.locator('#items tr').nth(index);
@@ -66,11 +66,41 @@ async function preparePrint(page) {
   assert.equal(await page.evaluate(() => window.__printCalls), 1, 'valid quotation reaches print');
   assert.equal(await page.locator('#validationErrors').isVisible(), false);
   await page.emulateMedia({ media: 'print' });
-  for (const selector of ['.toolbar', '#measurementPanel', '#client']) assert.equal(await page.locator(selector).isVisible(), false);
-  assert.ok(await page.locator('.print-value').first().isVisible());
-  const text = await page.locator('.sheet').innerText();
+  for (const selector of ['.toolbar', '#measurementPanel', '#client', '.sheet']) assert.equal(await page.locator(selector).isVisible(), false);
+  assert.ok(await page.locator('#printDocument').isVisible());
+  assert.ok(await page.locator('#printDocument .print-page').count() > 0);
+  const text = await page.locator('#printDocument').innerText();
   assert.doesNotMatch(text, /profit|margin|project cost|cost breakdown|paint cost per litre|other expenses|internal costs/i);
+  assert.doesNotMatch(text, /quotation reference|TEST-V1-|customer phone|^Date$/im);
+  assert.doesNotMatch(await page.title(), /TEST-V1-|INTERNAL-REFERENCE/);
   return text;
+}
+
+async function assertPageGeometry(page) {
+  const pages = await page.locator('#printDocument .print-page').evaluateAll(elements => elements.map(element => {
+    const bounds = element.getBoundingClientRect();
+    const footer = element.querySelector('.print-footer').getBoundingClientRect();
+    const body = element.querySelector('.print-body').getBoundingClientRect();
+    const content = [...element.querySelector('.print-body').children].filter(child => child.getBoundingClientRect().height > 0);
+    return {
+      width: bounds.width, height: bounds.height,
+      footerY: footer.top - bounds.top, footerBottom: footer.bottom - bounds.top,
+      bodyBottom: body.bottom - bounds.top,
+      contentBottom: Math.max(body.top, ...content.map(child => child.getBoundingClientRect().bottom)) - bounds.top,
+      text: element.innerText,
+    };
+  }));
+  assert.ok(pages.length > 0);
+  for (const [index, geometry] of pages.entries()) {
+    assert.ok(Math.abs(geometry.width / geometry.height - 210 / 297) < 0.002, `page ${index + 1} has A4 ratio`);
+    assert.ok(Math.abs(geometry.footerY - pages[0].footerY) <= 1, `page ${index + 1} footer stays at the same vertical position`);
+    assert.ok(geometry.footerBottom <= geometry.height + 1, `page ${index + 1} footer stays inside A4`);
+    assert.ok(geometry.contentBottom <= geometry.footerY + 1, `page ${index + 1} content clears footer`);
+    assert.ok(geometry.bodyBottom <= geometry.footerY + 1, `page ${index + 1} body clears footer`);
+    assert.match(geometry.text, /TEST office|OFFICE_END_MARKER/);
+    assert.match(geometry.text, /TEST company contact|CONTACT_END_MARKER/);
+  }
+  return pages;
 }
 
 test('all service measurement modes calculate editable net quantities and correct units', async () => {
@@ -187,7 +217,11 @@ test('printing validates required customer fields, descriptions, units and loade
     await page.evaluate(() => { window.__printCalls = 0; window.print = () => { window.__printCalls += 1; }; });
     await page.locator('#print').click();
     assert.equal(await page.evaluate(() => window.__printCalls), 0);
-    assert.match(await page.locator('#validationErrors').innerText(), /reference|client name and address/);
+    assert.match(await page.locator('#validationErrors').innerText(), /client name and address/);
+    assert.doesNotMatch(await page.locator('#validationErrors').innerText(), /reference/);
+    assert.equal(await page.locator('#office').inputValue(), '');
+    assert.equal(await page.locator('#contact').inputValue(), '');
+    assert.equal(await page.locator('#phone').count(), 0);
     await completeCustomer(page);
     await setItem(page, 0, { description: 'TEST verified item', quantity: 10, rate: 25 });
     for (const [field, message] of [['.unit', /enter a unit/], ['.desc', /enter a description/]]) {
@@ -200,7 +234,9 @@ test('printing validates required customer fields, descriptions, units and loade
     const logo = await page.locator('.logo').evaluate(image => ({ complete: image.complete, width: image.naturalWidth }));
     assert.ok(logo.complete && logo.width > 0);
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'logo 1 2026.jpeg'))).digest('hex'), '26be735f886391f8ead97c368269a43804e6ed8814c7c66a2cb8b3c131b9c149');
+    await page.locator('#reference').fill('');
     assert.match(await preparePrint(page), /TEST verified item/);
+    await assertPageGeometry(page);
   } finally { await page.close(); }
 });
 
@@ -261,6 +297,7 @@ test('three services generate branded A4 customer PDFs with matching totals and 
       const text = await preparePrint(page);
       assert.ok(text.includes(expected));
       assert.match(text, new RegExp('PDF_END_' + service.toUpperCase()));
+      await assertPageGeometry(page);
       const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
       assert.ok(pdf.length > 10000);
       fs.writeFileSync(path.join(artifacts, 'quotation-' + service.toLowerCase() + '.pdf'), pdf);
@@ -284,9 +321,89 @@ test('long customer content and multiple items survive text mirrors and multipag
     assert.equal(await page.locator('#net').innerText(), '3,075.00');
     const text = await preparePrint(page);
     for (const marker of ['CLIENT_END_MARKER', 'SCOPE_END_MARKER', 'TERMS_END_MARKER', 'OFFICE_END_MARKER', 'CONTACT_END_MARKER', 'ITEM_END_01', 'ITEM_END_24']) assert.ok(text.includes(marker), marker + ' present in printable content');
+    assert.ok((await assertPageGeometry(page)).length > 1);
     const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
     fs.writeFileSync(path.join(artifacts, 'quotation-multipage.pdf'), pdf);
     fs.writeFileSync(path.join(artifacts, 'quotation-print-text.txt'), text);
     assert.ok(pdf.length > 20000);
+  } finally { await page.close(); }
+});
+
+test('customer print layout uses direct date, aligned parties and service heading; native print is idempotent', async () => {
+  const page = await openQuotation();
+  try {
+    await completeCustomer(page, 'Waterproofing');
+    await page.locator('#service').selectOption('Waterproofing');
+    await page.locator('#reference').fill('INTERNAL-REFERENCE-DO-NOT-PRINT');
+    await setItem(page, 0, { description: 'TEST layout item', quantity: 1, rate: 10.25 });
+    const text = await preparePrint(page);
+    assert.match(text, /16 November 2026/);
+    assert.doesNotMatch(text, /INTERNAL-REFERENCE-DO-NOT-PRINT|^Date$|^Service$|Customer phone/im);
+    assert.equal(await page.locator('#printDocument .print-date').first().innerText(), '16 November 2026');
+    const parties = await page.locator('#printDocument .print-page').first().locator('.print-party').evaluateAll(rows => rows.map(row => ({
+      label: row.querySelector('.print-party-label').textContent.trim(),
+      labelX: row.querySelector('.print-party-label').getBoundingClientRect().left,
+      colonX: row.querySelector('.print-party-colon').getBoundingClientRect().left,
+      valueX: row.querySelector('.print-party-value').getBoundingClientRect().left,
+    })));
+    assert.deepEqual(parties.map(row => row.label), ['Contractor', 'Client', 'Kind Attn.']);
+    for (const party of parties) {
+      assert.ok(Math.abs(party.labelX - parties[0].labelX) <= 1, 'party labels align');
+      assert.ok(Math.abs(party.colonX - parties[0].colonX) <= 1, 'party colons align');
+      assert.ok(Math.abs(party.valueX - parties[0].valueX) <= 1, 'party values align');
+    }
+    assert.equal(await page.locator('#printDocument .print-service-title').first().innerText(), 'WATERPROOFING');
+    assert.ok(await page.locator('#printDocument .print-service-title').first().evaluate(element => element.nextElementSibling.textContent.includes('TEST preparation and application methodology.')), 'highlights immediately follow service heading');
+    assert.match(text, /Waterproofing scope for automated verification only\./);
+    const pagesBefore = await page.locator('#printDocument .print-page').count();
+    const textBefore = await page.locator('#printDocument').innerText();
+    await page.evaluate(() => { dispatchEvent(new Event('beforeprint')); dispatchEvent(new Event('beforeprint')); });
+    assert.equal(await page.locator('#printDocument .print-page').count(), pagesBefore);
+    assert.equal(await page.locator('#printDocument').innerText(), textBefore);
+    assert.equal(await page.locator('#reference').inputValue(), 'INTERNAL-REFERENCE-DO-NOT-PRINT', 'internal editor metadata survives printing');
+    assert.doesNotMatch(await page.title(), /INTERNAL-REFERENCE/);
+    await assertPageGeometry(page);
+    await page.emulateMedia({ media: 'screen' });
+    await page.locator('#office').fill('TEST office UPDATED_FOOTER');
+    await page.locator('#contact').fill('TEST company contact UPDATED_CONTACT');
+    await preparePrint(page);
+    const currentFooters = await page.locator('#printDocument .print-footer').allTextContents();
+    assert.ok(currentFooters.length > 0);
+    for (const footer of currentFooters) {
+      assert.match(footer, /UPDATED_FOOTER/);
+      assert.match(footer, /UPDATED_CONTACT/);
+      assert.doesNotMatch(footer, /verification fixture only|INTERNAL-REFERENCE/);
+    }
+    await assertPageGeometry(page);
+  } finally { await page.close(); }
+});
+
+test('oversized single item and long terms paginate without losing content or overlapping footers', async () => {
+  const page = await openQuotation();
+  try {
+    await completeCustomer(page);
+    await setItem(page, 0, {
+      description: Array(75).fill('TEST lengthy specification line for surface preparation and approved application.').join('\n') + '\nOVERFLOW_DESCRIPTION_END',
+      quantity: 1,
+      rate: '10.25',
+    });
+    await page.locator('#terms').fill(Array(100).fill('TEST extended terms line confirms complete page pagination and customer obligations.').join('\n') + '\nOVERFLOW_TERMS_END');
+    const text = await preparePrint(page);
+    for (const marker of ['OVERFLOW_DESCRIPTION_END', 'OVERFLOW_TERMS_END']) assert.ok(text.includes(marker));
+    assert.match(text, /Rupees Ten and Twenty Five Paise Only\./);
+    assert.ok((await assertPageGeometry(page)).length > 1);
+    const pdf = await page.pdf({ format: 'A4', preferCSSPageSize: true, printBackground: true });
+    fs.writeFileSync(path.join(artifacts, 'quotation-overflow.pdf'), pdf);
+    assert.ok(pdf.length > 20000);
+    // A single pasted code/address fragment must also paginate without losing
+    // characters. Keep the PDF fixture above unchanged for PDF text checks.
+    await page.emulateMedia({ media: 'screen' });
+    const unbroken = 'X'.repeat(7000) + 'UNBROKEN_END_MARKER';
+    await page.locator('.desc').first().fill(unbroken);
+    await preparePrint(page);
+    const continuedDescription = (await page.locator('#printDocument .print-description').allTextContents()).join('');
+    assert.equal(continuedDescription, unbroken, 'unbroken description survives every continuation exactly');
+    assert.equal((continuedDescription.match(/UNBROKEN_END_MARKER/g) || []).length, 1);
+    assert.ok((await assertPageGeometry(page)).length > 1);
   } finally { await page.close(); }
 });

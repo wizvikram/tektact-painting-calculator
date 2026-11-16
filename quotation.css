@@ -80,3 +80,53 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .draft-warning { padding: 12px; margin-bottom: 14px; border: 2px solid #a32323; font: bold 13px/1.4 Arial, sans-serif; color: #a32323; }
+
+/* Customer-approved A4 composition. Each page reserves its measured footer. */
+.internal-identification { padding: 8px 10px; background: #f4f6f9; margin: 10px 0; }
+.internal-identification p { font: 11px/1.4 Arial, sans-serif; margin: 5px 0 0; }
+.print-document { display: none; font-family: "Comic Sans MS", "Trebuchet MS", Arial, sans-serif; font-size: 10.5pt; line-height: 1.5; color: #171b22; letter-spacing: .08px; }
+.print-document.is-measuring { display: block; position: absolute; left: -10000px; top: 0; visibility: hidden; }
+.print-page { position: relative; width: 210mm; height: 297mm; background: white; overflow: visible; }
+.print-body { position: absolute; top: 12mm; left: 14mm; right: 14mm; display: flex; flex-direction: column; gap: 6mm; }
+.print-body > * { flex: 0 0 auto; margin: 0; }
+.print-page.is-balanced .print-body { justify-content: space-between; }
+.print-header { position: relative; padding-right: 32mm; min-height: 38mm; }
+.print-date { margin-bottom: 10mm; }
+.print-logo { position: absolute; right: 0; top: 0; width: 26mm; height: 31mm; object-fit: contain; }
+.print-parties { display: grid; gap: 3mm; }
+.print-party { display: grid; grid-template-columns: 24mm 3mm minmax(0, 1fr); align-items: start; }
+.print-party-label, .print-party-colon { font-weight: 600; }
+.print-party-value { white-space: pre-wrap; overflow-wrap: anywhere; }
+.print-service-title { font-size: 15pt; line-height: 1.3; letter-spacing: .6px; margin: 0 0 4mm; }
+.print-highlights, .print-scope, .print-terms-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.print-scope { margin-top: 4mm; }
+.print-document h2 { margin: 0 0 4mm; font-size: 11.5pt; line-height: 1.4; }
+.print-items { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 10pt; line-height: 1.55; }
+.print-items th { padding: 3mm 1.3mm; text-align: left; font-size: 9.5pt; font-weight: bold; }
+.print-items td { padding: 3mm 1.3mm; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; }
+.print-items th:nth-child(1) { width: 6%; }
+.print-items th:nth-child(2) { width: 42%; }
+.print-items th:nth-child(3) { width: 8%; }
+.print-items th:nth-child(4) { width: 11%; }
+.print-items th:nth-child(5) { width: 14%; }
+.print-items th:nth-child(6) { width: 19%; text-align: right; }
+.print-items .print-amount { text-align: right; font-weight: bold; }
+.print-measurement { color: #596779; font-size: 8.5pt; line-height: 1.45; margin-top: 2mm; }
+.print-summary { border-top: 1px solid #9ba2ac; padding-top: 5mm; }
+.print-total { text-align: right; font-size: 12pt; font-weight: bold; }
+.print-words { margin-top: 5mm; padding-top: 4mm; border-top: 1px solid #d7dce3; }
+.print-words b { display: block; margin-bottom: 1mm; font-weight: 600; }
+.print-terms { border-top: 1px solid #9ba2ac; padding-top: 5mm; }
+.print-terms-text { font-size: 9.5pt; line-height: 1.6; }
+.print-footer { position: absolute; bottom: 12mm; left: 14mm; right: 14mm; border-top: 1px solid #333; padding-top: 4mm; display: grid; grid-template-columns: minmax(0, 1fr) 14mm; gap: 6mm; font-size: 8.5pt; line-height: 1.45; }
+.print-office, .print-contact { white-space: pre-wrap; overflow-wrap: anywhere; }
+.print-contact { margin-top: 1mm; }
+.print-page-number { align-self: end; text-align: right; white-space: nowrap; color: #596779; }
+@page { size: A4; margin: 0; }
+@media print {
+  html, body { margin: 0 !important; padding: 0 !important; width: 210mm; background: white; }
+  .sheet, .toolbar, .notice, .error-summary, noscript { display: none !important; }
+  .print-document, .print-document.is-measuring { display: block; position: static; visibility: visible; }
+  .print-page { break-after: page; break-inside: avoid; }
+  .print-page:last-child { break-after: auto; }
+}

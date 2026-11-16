@@ -1,0 +1,1 @@
+{"private":true,"scripts":{"test:quotation":"node --test tests/quotation.test.cjs"},"devDependencies":{"playwright":"^1.58.0"}}

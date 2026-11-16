@@ -1,0 +1,10 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {chromium}=require('playwright');const path=require('node:path');const fs=require('node:fs');
+test('TEKTACT quotation end-to-end',async()=>{const browser=await chromium.launch({headless:true});const page=await browser.newPage();try{
+await page.goto('file://'+path.resolve('quotation.html'));assert.equal(await page.locator('#service').inputValue(),'Painting');
+await page.locator('#m_width').fill('10');await page.locator('#m_breadth').fill('12');await page.locator('#m_height').fill('9');assert.match(await page.locator('#measuredQty').innerText(),/396/);
+await page.locator('#service').selectOption('Waterproofing');assert.equal(await page.locator('#measureMode option').count(),5);await page.locator('#m_width').fill('20');await page.locator('#m_breadth').fill('30');assert.match(await page.locator('#measuredQty').innerText(),/600/);
+await page.locator('#applyMeasurement').click();assert.equal(await page.locator('.qty').first().inputValue(),'600');await page.locator('.rate').first().fill('85');assert.match(await page.locator('#net').innerText(),/51,000/);assert.match(await page.locator('#words').innerText(),/Fifty One Thousand/);
+await page.locator('#service').selectOption('Flooring');await page.locator('#measureMode').selectOption('1');await page.locator('#m_width').fill('10');await page.locator('#m_breadth').fill('20');await page.locator('#m_count').fill('3');assert.match(await page.locator('#measuredQty').innerText(),/600/);
+await page.locator('#client').fill('Sample Customer');await page.locator('#scope').fill('Sample work');await page.locator('#office').fill('Sample office');await page.locator('#contact').fill('Sample contact');await page.locator('.desc').first().fill('Flooring application');
+const pdf=await page.pdf({format:'A4',printBackground:true});assert.ok(pdf.length>10000);fs.mkdirSync('test-artifacts',{recursive:true});fs.writeFileSync('test-artifacts/quotation-smoke.pdf',pdf);
+}finally{await browser.close()}});

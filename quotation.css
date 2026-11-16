@@ -1,0 +1,82 @@
+/* Existing approved quotation layout, retained from PR #1. */
+:root{font-family:"Trebuchet MS",Arial,sans-serif;color:#171b22}*{box-sizing:border-box}body{margin:0;background:#e9edf3}.toolbar{background:#102c52;color:white;padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:space-between}.toolbar button,.toolbar a{background:white;color:#102c52;border:0;border-radius:5px;padding:10px 14px;font-weight:bold;cursor:pointer;text-decoration:none}.hint{font-size:12px;color:#e5edf7}.sheet{background:white;max-width:794px;min-height:1123px;margin:25px auto;padding:48px 45px 30px;box-shadow:0 5px 24px #0002;font-size:13px;line-height:1.45}.head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.head .details{flex:1}.logo{width:112px;height:105px;object-fit:contain}h1{font-size:16px;margin:0 0 12px}label{display:block;font-size:11px;font-weight:bold;margin:8px 0 2px}input,textarea,select{font:inherit;border:1px solid #d7dce3;border-radius:3px;padding:5px;width:100%;background:white}textarea{resize:vertical;min-height:55px}.date{max-width:170px}hr{border:0;border-top:1px solid #222;margin:19px 0 13px}h2{font-size:14px;margin:0 0 8px}.rows{width:100%;border-collapse:collapse;margin-top:14px}.rows th{font-size:12px;text-align:left;border-bottom:1px solid #bbb;padding:7px 5px}.rows td{vertical-align:top;padding:7px 4px;border-bottom:1px solid #eee}.rows input,.rows textarea{min-width:0}.rows .desc{min-width:170px}.rows .n{width:65px}.rows .qty{width:80px}.rows .rate{width:85px}.rows .amt{text-align:right;white-space:nowrap;font-weight:bold}.totals{display:flex;justify-content:flex-end;margin-top:24px}.totals strong{font-size:16px}.words{margin-top:22px}.terms{margin-top:34px}.footer{border-top:1px solid #222;margin-top:30px;padding-top:12px;font-size:12px}.actions{margin:12px 0;display:flex;gap:8px}.actions button{padding:7px 10px;border:1px solid #9da9bb;background:#fff;cursor:pointer}.muted{color:#596779}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.line-item-remove{background:#fff;border:1px solid #aaa;cursor:pointer}.print-only{display:none}#measurementPanel{border:1px solid #d7dce3;background:#f8fafc;padding:15px;margin:18px 0;border-radius:5px}#measurementPanel button{background:#102c52;color:white;border:0;padding:10px;border-radius:4px;cursor:pointer}#measurementPanel .two{margin:8px 0}@page{size:A4;margin:12mm}@media print{body{background:white} .sheet input,.sheet textarea{white-space:pre-wrap;overflow:visible}.toolbar,.actions,.line-item-remove,.no-print{display:none!important}.sheet{margin:0;padding:0;box-shadow:none;max-width:none;min-height:0}input,textarea,select{border:0;padding:0;appearance:none;resize:none;overflow:visible}textarea{field-sizing:content}.rows tr{break-inside:avoid}.footer{break-inside:avoid}.print-only{display:block}}@media(max-width:650px){.sheet{margin:8px;padding:18px;min-height:0}.rows{font-size:11px}.rows .desc{min-width:100px}.head{gap:8px}.logo{width:75px;height:75px}}
+@media screen and (min-width:900px){.sheet{padding:48px 48px 28px}}.sheet{font-family:"Comic Sans MS","Trebuchet MS",cursive;letter-spacing:.12px}.head{align-items:flex-start}.head .details{font-weight:600}.logo{width:126px;height:116px}.rows th{border-bottom:0;font-weight:700}.rows td{border-bottom:0}.rows{margin-top:24px}.rows .desc{min-width:210px}.totals{margin-top:34px}.words{margin-top:8px;max-width:72%;font-weight:600}.footer{margin-top:48px}.sheet hr{border-top:1px solid #333}@media print{.sheet{font-size:12px}.head{margin-top:5px}.rows{margin-top:25px}.footer{margin-top:40px}}
+/* Editing and validation additions; the customer layout above is preserved. */
+[hidden] { display: none !important; }
+.notice, .error-summary { max-width: 794px; margin: 16px auto; padding: 14px 18px; background: #fff; border-left: 4px solid #102c52; line-height: 1.5; }
+.error-summary { border-color: #a32323; color: #812121; }
+.error-summary ul { margin-bottom: 0; }
+.measurement-error, .item-error { color: #a32323; font: 12px/1.4 Arial, sans-serif; }
+.item-error { margin: 4px 0 0; }
+.measurement-note { margin-top: 5px; font-size: 10px; line-height: 1.4; color: #596779; overflow-wrap: anywhere; }
+[aria-invalid="true"] { border-color: #a32323; }
+button:disabled { opacity: .5; cursor: not-allowed !important; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, .table-scroll:focus-visible { outline: 3px solid #638ccc; outline-offset: 2px; }
+.print-value { display: none; }
+.head .details { min-width: 0; }
+.logo { flex: 0 0 auto; height: auto; max-height: 116px; }
+.table-scroll { overflow-x: auto; }
+.rows .unit { min-width: 50px; width: 55px; }
+.rows .qty { width: 84px; }
+.rows .rate { width: 90px; }
+.rows .desc { width: 100%; }
+.rows .amt { min-width: 93px; }
+.sheet textarea { line-height: 1.5; }
+.sheet label { font-family: "Trebuchet MS", Arial, sans-serif; }
+.toolbar { gap: 16px; }
+.toolbar > div:last-child { display: flex; flex-wrap: wrap; gap: 8px; }
+@media (max-width: 650px) {
+  .sheet { padding: 18px; }
+  .logo { width: 82px; max-height: 90px; }
+  .sheet .two { grid-template-columns: 1fr; }
+  .sheet .rows .desc { min-width: 190px; }
+  .notice, .error-summary { margin: 8px; }
+  input, textarea, select { font-size: 16px; }
+  .toolbar { padding: 14px; }
+}
+/* Keep the approved table on paper; use labelled item cards on narrow screens. */
+@media screen and (max-width: 650px) {
+  .rows, .rows tbody { display: block; width: 100%; }
+  .rows thead { display: none; }
+  .rows tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; border: 1px solid #d7dce3; padding: 12px; margin-bottom: 12px; border-radius: 5px; }
+  .rows td { display: block; padding: 0; min-width: 0; border: 0; }
+  .rows td::before { content: attr(data-label); display: block; font: bold 11px/1.4 "Trebuchet MS", Arial, sans-serif; margin-bottom: 4px; }
+  .rows .serial { grid-column: 1 / -1; font-weight: bold; }
+  .rows .serial::before { display: inline; margin-right: 4px; }
+  .rows td:nth-child(2), .rows td:last-child { grid-column: 1 / -1; }
+  .sheet .rows .desc { min-width: 0; width: 100%; }
+  .rows .unit, .rows .qty, .rows .rate { width: 100%; min-width: 0; }
+  .rows .amt { text-align: left; white-space: normal; overflow-wrap: anywhere; min-width: 0; }
+  .rows .line-item-remove { padding: 8px 14px; }
+}
+@media print {
+  html, body { width: auto; margin: 0; }
+  .sheet { width: 100%; font-size: 11px; line-height: 1.4; letter-spacing: .12px; }
+  .sheet input, .sheet textarea, .sheet select { display: none !important; }
+  .print-value { display: block; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-weight: normal; min-width: 0; }
+  .sheet label { margin: 5px 0 1px; font-size: 9px; }
+  .head { margin-top: 0; }
+  .logo { width: 116px; max-height: 108px; }
+  .sheet h2 { font-size: 12px; break-after: avoid; }
+  .sheet hr { margin: 13px 0 10px; }
+  .table-scroll { overflow: visible; }
+  .rows { width: 100%; table-layout: fixed; margin-top: 18px; }
+  .rows th { font-size: 10px; overflow-wrap: anywhere; }
+  .rows th:first-child { width: 5%; }
+  .rows th:nth-child(2) { width: 40%; }
+  .rows th:nth-child(3) { width: 8%; }
+  .rows th:nth-child(4) { width: 11%; }
+  .rows th:nth-child(5) { width: 16%; }
+  .rows th:nth-child(6) { width: 20%; text-align: right; }
+  .rows td { padding: 7px 4px; overflow-wrap: anywhere; }
+  .rows .amt { min-width: 0; white-space: normal; }
+  .rows thead { display: table-header-group; }
+  .rows tr { break-inside: avoid; }
+  .summary-block { break-inside: avoid; }
+  .totals { margin-top: 24px; }
+  .words { max-width: 90%; margin-top: 8px; }
+  .footer { margin-top: 30px; padding-top: 10px; font-size: 10px; break-inside: avoid; }
+  .notice, .error-summary { display: none !important; }
+}
+
+.draft-warning { padding: 12px; margin-bottom: 14px; border: 2px solid #a32323; font: bold 13px/1.4 Arial, sans-serif; color: #a32323; }

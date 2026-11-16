@@ -30,6 +30,15 @@ const numberFormatter = new Intl.NumberFormat("en-IN", {
   maximumFractionDigits: 2,
 });
 
+const transferAmountFormatter = new Intl.NumberFormat("en-US", {
+  useGrouping: false,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+// Match the quotation maker's supported total without changing the estimate formula.
+const maximumQuotation = 999999999.99;
+
 function getInputValue(id) {
   const rawValue = document.getElementById(id).value.trim();
   return rawValue === "" ? Number.NaN : Number(rawValue);
@@ -64,13 +73,19 @@ function formatCurrency(amount) {
   return currencyFormatter.format(amount);
 }
 
-function clearEstimate() {
+function clearEstimate(message = "Fix the highlighted inputs to see your estimate.") {
   document.getElementById("quantityOutput").innerHTML = "— <small>litres</small>";
-  document.getElementById("quantityNote").textContent = "Fix the highlighted inputs to see your estimate.";
+  document.getElementById("quantityNote").textContent = message;
   ["materialsOutput", "labourOutput", "expensesOutput", "projectCostOutput", "profitOutput", "quoteOutput"].forEach((id) => {
     document.getElementById(id).textContent = "—";
   });
   document.getElementById("actualMarginOutput").textContent = "";
+  const transfer = document.getElementById("quotationTransfer");
+  if (transfer) {
+    transfer.removeAttribute("href");
+    transfer.setAttribute("aria-disabled", "true");
+    transfer.tabIndex = -1;
+  }
 }
 
 function updateEstimate() {
@@ -91,6 +106,12 @@ function updateEstimate() {
   const profit = quotation - projectCost;
   const actualMargin = quotation === 0 ? 0 : (profit / quotation) * 100;
 
+  if (![paintLitres, materialsCost, labourCost, projectCost, quotation, profit, actualMargin].every(Number.isFinite)
+      || quotation > maximumQuotation) {
+    clearEstimate("This estimate exceeds the supported limit of ₹99,99,99,999.99. Reduce the area, rates or margin, and check the coverage.");
+    return;
+  }
+
   document.getElementById("quantityOutput").innerHTML = `${numberFormatter.format(paintLitres)} <small>litres</small>`;
   document.getElementById("quantityNote").textContent = `For ${numberFormatter.format(inputs.wallArea)} sq ft across ${numberFormatter.format(inputs.coats)} ${inputs.coats === 1 ? "coat" : "coats"}`;
   document.getElementById("materialsOutput").textContent = formatCurrency(materialsCost);
@@ -100,8 +121,13 @@ function updateEstimate() {
   document.getElementById("profitOutput").textContent = formatCurrency(profit);
   document.getElementById("actualMarginOutput").textContent = `${numberFormatter.format(actualMargin)}% margin`;
   document.getElementById("quoteOutput").textContent = formatCurrency(quotation);
-  const transfer = document.getElementById('quotationTransfer');
-  if (transfer) transfer.href = `quotation.html?area=${encodeURIComponent(inputs.wallArea)}&quote=${encodeURIComponent(quotation.toFixed(2))}`;
+  const transfer = document.getElementById("quotationTransfer");
+  if (transfer) {
+    // Send customer-facing figures only; supplier costs and margin stay in this calculator.
+    transfer.href = `quotation.html?area=${encodeURIComponent(inputs.wallArea)}&quote=${encodeURIComponent(transferAmountFormatter.format(quotation))}`;
+    transfer.setAttribute("aria-disabled", "false");
+    transfer.tabIndex = 0;
+  }
 }
 
 Object.keys(fieldRules).forEach((id) => {

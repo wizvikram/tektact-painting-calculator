@@ -1,4 +1,4 @@
-name: Quotation browser and PDF smoke test
+name: Quotation calculations, browser and PDF verification
 on:
   push:
     branches: [feature/universal-quotation-v1]
@@ -13,12 +13,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:quotation
+      - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pypdf==6.21.4 pypdfium2==5.14.0
+      - run: python tests/verify-pdf.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: quotation-smoke-pdf
-          path: test-artifacts/quotation-smoke.pdf
+          name: quotation-verification
+          path: test-artifacts/
           if-no-files-found: ignore

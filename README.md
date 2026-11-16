@@ -83,7 +83,7 @@ verification). They are not needed to use the website:
 npm ci
 npx playwright install chromium
 npm test
-python -m pip install pypdf==6.21.4 pypdfium2==5.14.0
+python -m pip install pypdf==6.21.4 pypdfium2==5.14.0 Pillow==13.0.0
 python tests/verify-pdf.py
 ```
 

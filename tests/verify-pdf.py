@@ -107,8 +107,9 @@ def verify(filename, total, words, markers):
     assert total in normalized, f"{filename}: final total missing"
     assert words in normalized, f"{filename}: amount words mismatch"
     assert "Tektact Consultants & Contractors" in normalized
-    footer_anchor = "TEST extended company address" if "multipage" in filename else "3/194, Indira Nagar, Chinna Thadagam, Coimbatore - 641108"
+    footer_anchor = "Regd. Office : TEST extended company address" if "multipage" in filename else "Regd. Office : 3/194, Indira Nagar, Chinna Thadagam, Coimbatore - 641108"
     assert footer_anchor in normalized, f"{filename}: approved footer address missing"
+    assert all(page_text.count("Regd. Office : ") == 1 for page_text in pages_text), f"{filename}: exact office prefix must occur once on every page"
     if "multipage" not in filename:
         approved_contact = "Ph: +91 9894 88 33 55 | Vikram@tektact.in | www.tektact.in"
         for page_number, page_text in enumerate(pages_text, start=1):

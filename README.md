@@ -39,7 +39,9 @@ pages with table headings repeated and page numbers in the footer. A quotation i
 limited to 200 pages; an excessively long footer is rejected rather than clipped.
 
 The approved office/contact details are stored in the read-only footer fields.
-They print as exactly two footer lines without a Registered Office heading.
+They print as exactly two footer lines. The first starts with `Regd. Office : `
+followed by the approved address; the second contains the company contact details.
+There is no separate footer heading.
 Do not use synthetic details in the test fixtures as company information.
 The revised A4 preview remains subject to customer approval before release.
 

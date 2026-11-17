@@ -18,7 +18,7 @@
   function footer(data) {
     const result = element("footer", "print-footer");
     const details = element("div", "print-footer-details");
-    details.append(element("div", "print-office", data.office), element("div", "print-contact", data.contact));
+    details.append(element("div", "print-office", "Regd. Office : " + data.office), element("div", "print-contact", data.contact));
     result.append(details, element("span", "print-page-number"));
     return result;
   }

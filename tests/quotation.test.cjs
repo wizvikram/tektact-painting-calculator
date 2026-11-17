@@ -117,7 +117,8 @@ async function assertPageGeometry(page) {
     assert.ok(geometry.footerBottom <= geometry.height + 1, `page ${index + 1} footer stays inside A4`);
     assert.ok(geometry.contentBottom <= geometry.footerY + 1, `page ${index + 1} content clears footer`);
     assert.ok(geometry.bodyBottom <= geometry.footerY + 1, `page ${index + 1} body clears footer`);
-    assert.ok(geometry.footerText.includes(expectedOffice), `page ${index + 1} prints the current office address`);
+    assert.ok(geometry.footerText.includes(`Regd. Office : ${expectedOffice}`), `page ${index + 1} prints the exact office prefix and current address`);
+    assert.equal((geometry.footerText.match(/Regd\. Office : /g) || []).length, 1, `page ${index + 1} prints the office prefix exactly once`);
     assert.ok(geometry.footerText.includes(expectedContact), `page ${index + 1} prints the current company contact`);
   }
   return pages;
@@ -259,7 +260,7 @@ test('printing validates required customer fields, descriptions, units and loade
     await page.locator('#reference').fill('');
     assert.match(await preparePrint(page), /TEST verified item/);
     const footerLines = await page.locator('#printDocument .print-footer-details').first().evaluate(footer => [...footer.children].map(line => line.textContent));
-    assert.deepEqual(footerLines, [approvedOffice, approvedContact], 'approved footer prints exactly two supplied lines');
+    assert.deepEqual(footerLines, [`Regd. Office : ${approvedOffice}`, approvedContact], 'approved footer prints exactly two supplied lines with the office prefix');
     await assertPageGeometry(page);
   } finally { await page.close(); }
 });

@@ -20,27 +20,28 @@ The original calculator remains at <http://localhost:8000/index.html>.
    Quantities, units, descriptions and rates remain editable. Selecting a row
    restores its saved worksheet dimensions for the currently selected service.
    Editing its quantity/unit manually clears the old measurement note.
-4. Enter verified office and company contact details. Review the editable terms:
+4. Check the approved office and company contact details. Review the editable terms:
    they are draft terms, not a record of a customer agreement. No contact details,
    supplier prices, labour prices or paint coverage are invented by this tool.
 5. Select **Print / Save PDF**. Fix any validation messages. In the print dialog,
    choose A4, scale 100%, use the page's margins, and turn off browser headers and
    footers. Save as PDF.
 
-The customer-approved print composition shows the formatted date directly, aligned
-Contractor / Client / Kind Attn. details, and the selected service in uppercase.
-Editable application highlights appear immediately below that service title;
-scope text follows without a separate heading. The customer phone field is removed.
+The customer-approved print composition shows the formatted date directly and
+aligned Contractor / Client / Kind Attn. details. The selected service heading is
+not printed. Editable application highlights lead the application section, with
+scope text following without a separate heading. The service selector remains in
+the editor for the service-specific measurements. The customer phone field is removed.
 Sections spread vertically on A4 with readable specifications, separately spaced
 totals, amount in words and terms. Every page reserves the actual office/contact
 footer height and a clear gap. Long descriptions and terms continue onto additional
 pages with table headings repeated and page numbers in the footer. A quotation is
 limited to 200 pages; an excessively long footer is rejected rather than clipped.
 
-No permanent office/contact details are currently stored in this repository.
-Those fields remain blank until the user enters verified details; print validation
-still requires them. Do not use synthetic details in the test fixtures as company
-information. The current layout is pending approval of the revised A4 preview.
+The approved office/contact details are stored in the read-only footer fields.
+They print as exactly two footer lines without a Registered Office heading.
+Do not use synthetic details in the test fixtures as company information.
+The revised A4 preview remains subject to customer approval before release.
 
 All prices in the quotation are customer prices in Indian rupees. Internal
 purchase costs and profit margins are not transferred or rendered in it.

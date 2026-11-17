@@ -75,27 +75,27 @@ def text_bounds(text_page, needle, filename, required=True):
             bounds.append((min(box[0] for box in boxes), min(box[1] for box in boxes),
                            max(box[2] for box in boxes), max(box[3] for box in boxes)))
     assert bounds, f"{filename}: missing glyph bounds for {needle!r}"
-    # A service name can also occur in a fixture's item marker. Its title is
-    # the uppermost occurrence on page one, independent of PDF paint order.
+    # Select the uppermost occurrence on page one independently of PDF paint
+    # order when fixture text also appears later in an item or terms.
     return max(bounds, key=lambda box: box[3])
 
 
-def verify_first_page_header(text_page, filename, service):
+def verify_first_page_header(text_page, filename):
     date = text_bounds(text_page, "16 November 2026", filename)
     contractor = text_bounds(text_page, "Contractor", filename)
     client = text_bounds(text_page, "Client", filename)
     attention = text_bounds(text_page, "Kind Attn.", filename)
-    title = text_bounds(text_page, service, filename)
+    highlights = text_bounds(text_page, "TEST preparation and application methodology.", filename)
     # PDF coordinates start at the bottom, so greater y means visually above.
     assert date[1] >= contractor[3] + 2, f"{filename}: date overlaps or follows the party header"
     assert contractor[1] >= client[3], f"{filename}: Contractor and Client labels overlap or are reversed"
     assert client[1] >= attention[3], f"{filename}: Client and Kind Attn. labels overlap or are reversed"
     assert max(box[0] for box in [contractor, client, attention]) - min(box[0] for box in [contractor, client, attention]) <= 1, f"{filename}: party labels are not aligned"
-    assert attention[1] >= title[3] + 2, f"{filename}: service title overlaps or precedes Kind Attn."
+    assert attention[1] >= highlights[3] + 2, f"{filename}: application highlights overlap or precede Kind Attn."
     for heading in ["Description of specification", "No.", "Rate (₹)", "Amount (₹)"]:
         table_heading = text_bounds(text_page, heading, filename, required=False)
         if table_heading is not None:
-            assert title[1] >= table_heading[3] + 2, f"{filename}: table heading {heading!r} overlaps or precedes the service title"
+            assert highlights[1] >= table_heading[3] + 2, f"{filename}: table heading {heading!r} overlaps or precedes the application highlights"
 
 
 def verify(filename, total, words, markers):
@@ -107,15 +107,22 @@ def verify(filename, total, words, markers):
     assert total in normalized, f"{filename}: final total missing"
     assert words in normalized, f"{filename}: amount words mismatch"
     assert "Tektact Consultants & Contractors" in normalized
-    assert "Registered Office" in normalized
+    footer_anchor = "TEST extended company address" if "multipage" in filename else "3/194, Indira Nagar, Chinna Thadagam, Coimbatore - 641108"
+    assert footer_anchor in normalized, f"{filename}: approved footer address missing"
+    if "multipage" not in filename:
+        approved_contact = "Ph: +91 9894 88 33 55 | Vikram@tektact.in | www.tektact.in"
+        for page_number, page_text in enumerate(pages_text, start=1):
+            page_normalized = re.sub(r"\s+", " ", page_text)
+            assert page_normalized.count(footer_anchor) == 1, f"{filename}: approved address must occur once on page {page_number}"
+            assert page_normalized.count(approved_contact) == 1, f"{filename}: approved contact must occur once on page {page_number}"
+    assert not re.search(r"^\s*Registered\s+Office\s*$", text, re.M | re.I), f"{filename}: removed Registered Office label printed"
     assert not re.search(
         r"profit|margin|project cost|cost breakdown|paint cost per litre|"
         r"other expenses|internal costs|DRAFT - Incomplete", normalized, re.I
     ), f"{filename}: editor/internal or draft content leaked"
     assert not re.search(r"Quotation\s+reference|TEST-V1-|Customer\s+phone|TEST phone", normalized, re.I), f"{filename}: private editor metadata leaked"
     assert not re.search(r"^\s*(Service|Scope)\s*$", text, re.M | re.I), f"{filename}: generic Service/Scope heading printed"
-    service = "WATERPROOFING" if "waterproofing" in filename else "FLOORING" if "flooring" in filename else "PAINTING"
-    assert re.search(rf"^\s*{service}\s*$", text, re.M), f"{filename}: uppercase {service} heading missing"
+    assert not re.search(r"^\s*(PAINTING|WATERPROOFING|FLOORING)\s*$", text, re.M), f"{filename}: selected service heading printed"
     for marker in markers:
         expected_count = len(reader.pages) if marker in REPEATED_FOOTER_MARKERS else 1
         assert text.count(marker) == expected_count, f"{filename}: clipped/duplicated {marker} (expected {expected_count})"
@@ -142,8 +149,8 @@ def verify(filename, total, words, markers):
             rendered_page = pdf[index]
             text_page = rendered_page.get_textpage()
             if index == 0:
-                verify_first_page_header(text_page, filename, service)
-            footer_matches = find_text(text_page, "Registered Office")
+                verify_first_page_header(text_page, filename)
+            footer_matches = find_text(text_page, footer_anchor)
             assert len(footer_matches) == 1, f"{filename}: page {index + 1} must contain one repeated office footer"
             footer_start, footer_length = footer_matches[0]
             footer_boxes = character_boxes(text_page, footer_start, text_page.count_chars() - footer_start)
@@ -173,7 +180,7 @@ def verify(filename, total, words, markers):
             rendered_page.close()
     finally:
         pdf.close()
-    assert max(footer_tops) - min(footer_tops) <= 1, f"{filename}: registered office footer shifts vertically between pages"
+    assert max(footer_tops) - min(footer_tops) <= 1, f"{filename}: approved office footer shifts vertically between pages"
     assert max(footer_bottoms) - min(footer_bottoms) <= 1, f"{filename}: footer bottom position shifts between pages"
     (ARTIFACTS / f"{path.stem}-extracted.txt").write_text(text, encoding="utf-8")
     return {"pdf": filename, "pages": len(reader.pages), "total": total, "footer_top_pt": round(footer_tops[0], 2), "footer_bottom_pt": round(footer_bottoms[0], 2), "rendered": rendered, "result": "PASS"}

@@ -8,6 +8,8 @@ const crypto = require('node:crypto');
 
 const root = path.resolve(__dirname, '..');
 const artifacts = path.join(root, 'test-artifacts');
+const approvedOffice = '3/194, Indira Nagar, Chinna Thadagam, Coimbatore - 641108';
+const approvedContact = 'Ph: +91 9894 88 33 55 | Vikram@tektact.in | www.tektact.in';
 let browser, server, baseURL;
 
 // HTTP reflects GitHub Pages behavior; the test server only serves project assets.
@@ -54,7 +56,19 @@ async function measure(page, service, mode, values, deduction = 0) {
   if (await page.locator('#deduct').isEnabled()) await page.locator('#deduct').fill(String(deduction));
 }
 async function completeCustomer(page, service = 'Painting') {
-  for (const [id, value] of Object.entries({ date: '2026-11-16', reference: 'TEST-V1-' + service.toUpperCase(), client: 'TEST Customer\nTEST project address, Coimbatore', attention: 'TEST Customer Contact', scope: service + ' scope for automated verification only.', highlights: 'TEST preparation and application methodology.', office: 'TEST office address - verification fixture only.', contact: 'TEST company contact - verification fixture only.' })) await page.locator('#' + id).fill(value);
+  for (const [id, value] of Object.entries({ date: '2026-11-16', reference: 'TEST-V1-' + service.toUpperCase(), client: 'TEST Customer\nTEST project address, Coimbatore', attention: 'TEST Customer Contact', scope: service + ' scope for automated verification only.', highlights: 'TEST preparation and application methodology.' })) await page.locator('#' + id).fill(value);
+}
+async function setFixtureFooter(page, office, contact) {
+  // Test-only injection exercises long legacy/imported footer content. The real
+  // fields keep their approved values and readonly UI in production; this helper
+  // neither removes readonly nor changes the application's source/defaults.
+  await page.evaluate(({ office, contact }) => {
+    for (const [id, value] of Object.entries({ office, contact })) {
+      const field = document.getElementById(id);
+      field.value = value;
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }, { office, contact });
 }
 async function setItem(page, index, { description, unit = 'SFT', quantity, rate }) {
   const row = page.locator('#items tr').nth(index);
@@ -72,11 +86,16 @@ async function preparePrint(page) {
   const text = await page.locator('#printDocument').innerText();
   assert.doesNotMatch(text, /profit|margin|project cost|cost breakdown|paint cost per litre|other expenses|internal costs/i);
   assert.doesNotMatch(text, /quotation reference|TEST-V1-|customer phone|^Date$/im);
+  assert.doesNotMatch(text, /Registered Office/i);
+  assert.equal(await page.locator('#printDocument .print-service-title').count(), 0);
+  assert.doesNotMatch(text, /^(?:PAINTING|WATERPROOFING|FLOORING)$/im, 'selected service headings stay out of customer print');
   assert.doesNotMatch(await page.title(), /TEST-V1-|INTERNAL-REFERENCE/);
   return text;
 }
 
 async function assertPageGeometry(page) {
+  const expectedOffice = await page.locator('#office').inputValue();
+  const expectedContact = await page.locator('#contact').inputValue();
   const pages = await page.locator('#printDocument .print-page').evaluateAll(elements => elements.map(element => {
     const bounds = element.getBoundingClientRect();
     const footer = element.querySelector('.print-footer').getBoundingClientRect();
@@ -88,6 +107,7 @@ async function assertPageGeometry(page) {
       bodyBottom: body.bottom - bounds.top,
       contentBottom: Math.max(body.top, ...content.map(child => child.getBoundingClientRect().bottom)) - bounds.top,
       text: element.innerText,
+      footerText: element.querySelector('.print-footer').textContent,
     };
   }));
   assert.ok(pages.length > 0);
@@ -97,8 +117,8 @@ async function assertPageGeometry(page) {
     assert.ok(geometry.footerBottom <= geometry.height + 1, `page ${index + 1} footer stays inside A4`);
     assert.ok(geometry.contentBottom <= geometry.footerY + 1, `page ${index + 1} content clears footer`);
     assert.ok(geometry.bodyBottom <= geometry.footerY + 1, `page ${index + 1} body clears footer`);
-    assert.match(geometry.text, /TEST office|OFFICE_END_MARKER/);
-    assert.match(geometry.text, /TEST company contact|CONTACT_END_MARKER/);
+    assert.ok(geometry.footerText.includes(expectedOffice), `page ${index + 1} prints the current office address`);
+    assert.ok(geometry.footerText.includes(expectedContact), `page ${index + 1} prints the current company contact`);
   }
   return pages;
 }
@@ -219,8 +239,10 @@ test('printing validates required customer fields, descriptions, units and loade
     assert.equal(await page.evaluate(() => window.__printCalls), 0);
     assert.match(await page.locator('#validationErrors').innerText(), /client name and address/);
     assert.doesNotMatch(await page.locator('#validationErrors').innerText(), /reference/);
-    assert.equal(await page.locator('#office').inputValue(), '');
-    assert.equal(await page.locator('#contact').inputValue(), '');
+    assert.equal(await page.locator('#office').inputValue(), approvedOffice);
+    assert.equal(await page.locator('#contact').inputValue(), approvedContact);
+    assert.equal(await page.locator('#office').evaluate(input => input.readOnly), true);
+    assert.equal(await page.locator('#contact').evaluate(input => input.readOnly), true);
     assert.equal(await page.locator('#phone').count(), 0);
     await completeCustomer(page);
     await setItem(page, 0, { description: 'TEST verified item', quantity: 10, rate: 25 });
@@ -236,6 +258,8 @@ test('printing validates required customer fields, descriptions, units and loade
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'logo 1 2026.jpeg'))).digest('hex'), '26be735f886391f8ead97c368269a43804e6ed8814c7c66a2cb8b3c131b9c149');
     await page.locator('#reference').fill('');
     assert.match(await preparePrint(page), /TEST verified item/);
+    const footerLines = await page.locator('#printDocument .print-footer-details').first().evaluate(footer => [...footer.children].map(line => line.textContent));
+    assert.deepEqual(footerLines, [approvedOffice, approvedContact], 'approved footer prints exactly two supplied lines');
     await assertPageGeometry(page);
   } finally { await page.close(); }
 });
@@ -312,8 +336,7 @@ test('long customer content and multiple items survive text mirrors and multipag
     await page.locator('#client').fill('TEST Long Customer\n' + Array(8).fill('TEST extended project address line, Coimbatore.').join('\n') + '\nCLIENT_END_MARKER');
     await page.locator('#scope').fill(Array(12).fill('TEST scope covers site preparation, approved treatment and finishing.').join('\n') + '\nSCOPE_END_MARKER');
     await page.locator('#terms').fill(Array(18).fill('TEST terms detail to verify complete wrapping and pagination.').join('\n') + '\nTERMS_END_MARKER');
-    await page.locator('#office').fill('TEST extended company address\n' + Array(5).fill('TEST office address continuation.').join('\n') + '\nOFFICE_END_MARKER');
-    await page.locator('#contact').fill('TEST customer-facing company contact CONTACT_END_MARKER');
+    await setFixtureFooter(page, 'TEST extended company address\n' + Array(5).fill('TEST office address continuation.').join('\n') + '\nOFFICE_END_MARKER', 'TEST customer-facing company contact CONTACT_END_MARKER');
     for (let index = 0; index < 24; index += 1) {
       if (index) await page.locator('#add').click();
       await setItem(page, index, { description: `TEST item ${index + 1}: detailed preparation and application.\nConfirm customer-approved scope and finish.\nITEM_END_${String(index + 1).padStart(2, '0')}`, quantity: index + 1, rate: '10.25' });
@@ -329,7 +352,7 @@ test('long customer content and multiple items survive text mirrors and multipag
   } finally { await page.close(); }
 });
 
-test('customer print layout uses direct date, aligned parties and service heading; native print is idempotent', async () => {
+test('customer print layout uses direct date, aligned parties and highlights without service heading; native print is idempotent', async () => {
   const page = await openQuotation();
   try {
     await completeCustomer(page, 'Waterproofing');
@@ -352,8 +375,7 @@ test('customer print layout uses direct date, aligned parties and service headin
       assert.ok(Math.abs(party.colonX - parties[0].colonX) <= 1, 'party colons align');
       assert.ok(Math.abs(party.valueX - parties[0].valueX) <= 1, 'party values align');
     }
-    assert.equal(await page.locator('#printDocument .print-service-title').first().innerText(), 'WATERPROOFING');
-    assert.ok(await page.locator('#printDocument .print-service-title').first().evaluate(element => element.nextElementSibling.textContent.includes('TEST preparation and application methodology.')), 'highlights immediately follow service heading');
+    assert.ok(await page.locator('#printDocument .print-application').first().evaluate(element => element.firstElementChild.classList.contains('print-highlights') && element.firstElementChild.textContent.includes('TEST preparation and application methodology.')), 'highlights appear first without a service heading');
     assert.match(text, /Waterproofing scope for automated verification only\./);
     const pagesBefore = await page.locator('#printDocument .print-page').count();
     const textBefore = await page.locator('#printDocument').innerText();
@@ -364,8 +386,7 @@ test('customer print layout uses direct date, aligned parties and service headin
     assert.doesNotMatch(await page.title(), /INTERNAL-REFERENCE/);
     await assertPageGeometry(page);
     await page.emulateMedia({ media: 'screen' });
-    await page.locator('#office').fill('TEST office UPDATED_FOOTER');
-    await page.locator('#contact').fill('TEST company contact UPDATED_CONTACT');
+    await setFixtureFooter(page, 'TEST office UPDATED_FOOTER', 'TEST company contact UPDATED_CONTACT');
     await preparePrint(page);
     const currentFooters = await page.locator('#printDocument .print-footer').allTextContents();
     assert.ok(currentFooters.length > 0);

@@ -112,7 +112,7 @@
 
     function application() {
       const section = element("section", "print-application");
-      section.append(element("h1", "print-service-title", data.service.toUpperCase()), element("div", "print-highlights", data.highlights));
+      section.append(element("div", "print-highlights", data.highlights));
       if (data.scope) section.append(element("div", "print-scope", data.scope));
       if (append(section)) return;
       const scope = section.querySelector(".print-scope");

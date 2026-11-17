@@ -117,7 +117,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .print-words b { display: block; margin-bottom: 1mm; font-weight: 600; }
 .print-terms { border-top: 1px solid #9ba2ac; padding-top: 5mm; }
 .print-terms-text { font-size: 9.5pt; line-height: 1.6; }
-.print-footer { position: absolute; bottom: 12mm; left: 14mm; right: 14mm; border-top: 1px solid #333; padding-top: 4mm; display: grid; grid-template-columns: minmax(0, 1fr) 14mm; gap: 6mm; font-size: 8.5pt; line-height: 1.45; }
+.print-footer { position: absolute; bottom: 12mm; left: 14mm; right: 14mm; border-top: 1px solid #9ba2ac; padding-top: 4mm; display: grid; grid-template-columns: minmax(0, 1fr) 14mm; gap: 6mm; font-size: 8.5pt; line-height: 1.45; }
 .print-office, .print-contact { white-space: pre-wrap; overflow-wrap: anywhere; }
 .print-contact { margin-top: 1mm; }
 .print-page-number { align-self: end; text-align: right; white-space: nowrap; color: #596779; }

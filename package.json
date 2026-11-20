@@ -1,0 +1,12 @@
+{
+  "name": "tektact-universal-quotation-v1",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:unit": "node --test tests/quotation-core.test.cjs tests/calculator.test.cjs",
+    "test:quotation": "node --test tests/quotation.test.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}

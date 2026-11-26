@@ -110,15 +110,22 @@
       [...parties.children].forEach((row) => appendText(row, ".print-party-value"));
     }
 
+    function applicationField(label, value, className) {
+      const field = element("section", `print-application-field ${className}`);
+      field.append(element("div", "print-application-label", label), element("div", "print-application-value", value));
+      return field;
+    }
+
     function application() {
+      const fields = [
+        applicationField("Scope details", data.scope, "print-scope"),
+        applicationField("Application highlights", data.highlights, "print-highlights")
+      ];
       const section = element("section", "print-application");
-      section.append(element("div", "print-highlights", data.highlights));
-      if (data.scope) section.append(element("div", "print-scope", data.scope));
+      section.append(...fields);
       if (append(section)) return;
-      const scope = section.querySelector(".print-scope");
-      if (scope) scope.remove();
-      appendText(section, ".print-highlights");
-      if (scope) appendText(scope);
+      section.remove();
+      fields.forEach((field) => appendText(field, ".print-application-value"));
     }
 
     function createTable() {

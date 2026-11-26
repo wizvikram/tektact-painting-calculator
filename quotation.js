@@ -264,7 +264,7 @@ function syncPrintContent() {
     window.TektactPrint.build({
       date: value("date") ? new Date(value("date") + "T12:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "",
       contractor: value("contractor"), client: value("client"), attention: value("attention"),
-      highlights: value("highlights"), scope: value("scope"),
+      scope: value("scope"), highlights: value("highlights"),
       office: value("office"), contact: value("contact"), terms: value("terms"),
       total: $("net").textContent, words: $("words").textContent, draft,
       items: [...$("items").rows].map((row) => ({

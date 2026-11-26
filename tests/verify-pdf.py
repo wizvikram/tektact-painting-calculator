@@ -85,17 +85,23 @@ def verify_first_page_header(text_page, filename):
     contractor = text_bounds(text_page, "Contractor", filename)
     client = text_bounds(text_page, "Client", filename)
     attention = text_bounds(text_page, "Kind Attn.", filename)
-    highlights = text_bounds(text_page, "TEST preparation and application methodology.", filename)
+    scope_label = text_bounds(text_page, "Scope details", filename)
+    scope_value = text_bounds(text_page, "scope for automated verification only.", filename)
+    highlights_label = text_bounds(text_page, "Application highlights", filename)
+    highlights_value = text_bounds(text_page, "TEST preparation and application methodology.", filename)
     # PDF coordinates start at the bottom, so greater y means visually above.
     assert date[1] >= contractor[3] + 2, f"{filename}: date overlaps or follows the party header"
     assert contractor[1] >= client[3], f"{filename}: Contractor and Client labels overlap or are reversed"
     assert client[1] >= attention[3], f"{filename}: Client and Kind Attn. labels overlap or are reversed"
     assert max(box[0] for box in [contractor, client, attention]) - min(box[0] for box in [contractor, client, attention]) <= 1, f"{filename}: party labels are not aligned"
-    assert attention[1] >= highlights[3] + 2, f"{filename}: application highlights overlap or precede Kind Attn."
+    assert attention[1] >= scope_label[3] + 2, f"{filename}: Scope details overlap or precede Kind Attn."
+    assert scope_label[1] >= scope_value[3], f"{filename}: scope text does not follow its label"
+    assert scope_value[1] >= highlights_label[3] + 2, f"{filename}: Application highlights does not follow Scope details"
+    assert highlights_label[1] >= highlights_value[3], f"{filename}: highlights text does not follow its label"
     for heading in ["Description of specification", "No.", "Rate (₹)", "Amount (₹)"]:
         table_heading = text_bounds(text_page, heading, filename, required=False)
         if table_heading is not None:
-            assert highlights[1] >= table_heading[3] + 2, f"{filename}: table heading {heading!r} overlaps or precedes the application highlights"
+            assert highlights_value[1] >= table_heading[3] + 2, f"{filename}: table heading {heading!r} overlaps or precedes the application highlights"
 
 
 def verify(filename, total, words, markers):
@@ -122,8 +128,9 @@ def verify(filename, total, words, markers):
         r"other expenses|internal costs|DRAFT - Incomplete", normalized, re.I
     ), f"{filename}: editor/internal or draft content leaked"
     assert not re.search(r"Quotation\s+reference|TEST-V1-|Customer\s+phone|TEST phone", normalized, re.I), f"{filename}: private editor metadata leaked"
-    assert not re.search(r"^\s*(Service|Scope)\s*$", text, re.M | re.I), f"{filename}: generic Service/Scope heading printed"
-    assert not re.search(r"^\s*(PAINTING|WATERPROOFING|FLOORING)\s*$", text, re.M), f"{filename}: selected service heading printed"
+    assert not re.search(r"^\s*Service\s*$", text, re.M | re.I), f"{filename}: internal Service label printed"
+    assert re.search(r"^\s*Scope details\s*$", text, re.M | re.I), f"{filename}: Scope details label missing"
+    assert re.search(r"^\s*Application highlights\s*$", text, re.M | re.I), f"{filename}: Application highlights label missing"
     for marker in markers:
         expected_count = len(reader.pages) if marker in REPEATED_FOOTER_MARKERS else 1
         assert text.count(marker) == expected_count, f"{filename}: clipped/duplicated {marker} (expected {expected_count})"

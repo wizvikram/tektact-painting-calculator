@@ -86,7 +86,8 @@ def verify_first_page_header(text_page, filename):
     client = text_bounds(text_page, "Client", filename)
     attention = text_bounds(text_page, "Kind Attn.", filename)
     scope_label = text_bounds(text_page, "Scope details", filename)
-    scope_value = text_bounds(text_page, "scope for automated verification only.", filename)
+    scope_fixture = "TEST scope covers site preparation, approved treatment and finishing." if filename == "quotation-multipage.pdf" else "scope for automated verification only."
+    scope_value = text_bounds(text_page, scope_fixture, filename)
     highlights_label = text_bounds(text_page, "Application highlights", filename)
     highlights_value = text_bounds(text_page, "TEST preparation and application methodology.", filename)
     # PDF coordinates start at the bottom, so greater y means visually above.

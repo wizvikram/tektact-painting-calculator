@@ -88,7 +88,7 @@ async function preparePrint(page) {
   assert.doesNotMatch(text, /quotation reference|TEST-V1-|customer phone|^Date$/im);
   assert.doesNotMatch(text, /Registered Office/i);
   assert.equal(await page.locator('#printDocument .print-service-title').count(), 0);
-  assert.doesNotMatch(text, /^(?:PAINTING|WATERPROOFING|FLOORING)$/im, 'selected service headings stay out of customer print');
+  assert.doesNotMatch(text, /^Service$/im, 'internal service selector stays out of customer print');
   assert.doesNotMatch(await page.title(), /TEST-V1-|INTERNAL-REFERENCE/);
   return text;
 }
@@ -353,7 +353,7 @@ test('long customer content and multiple items survive text mirrors and multipag
   } finally { await page.close(); }
 });
 
-test('customer print layout uses direct date, aligned parties and highlights without service heading; native print is idempotent', async () => {
+test('customer print layout uses direct date, aligned parties and ordered application fields; native print is idempotent', async () => {
   const page = await openQuotation();
   try {
     await completeCustomer(page, 'Waterproofing');
@@ -362,7 +362,7 @@ test('customer print layout uses direct date, aligned parties and highlights wit
     await setItem(page, 0, { description: 'TEST layout item', quantity: 1, rate: 10.25 });
     const text = await preparePrint(page);
     assert.match(text, /16 November 2026/);
-    assert.doesNotMatch(text, /INTERNAL-REFERENCE-DO-NOT-PRINT|^Date$|^Service$|Customer phone/im);
+    assert.doesNotMatch(text, /INTERNAL-REFERENCE-DO-NOT-PRINT|^Date$|Customer phone/im);
     assert.equal(await page.locator('#printDocument .print-date').first().innerText(), '16 November 2026');
     const parties = await page.locator('#printDocument .print-page').first().locator('.print-party').evaluateAll(rows => rows.map(row => ({
       label: row.querySelector('.print-party-label').textContent.trim(),
@@ -376,8 +376,15 @@ test('customer print layout uses direct date, aligned parties and highlights wit
       assert.ok(Math.abs(party.colonX - parties[0].colonX) <= 1, 'party colons align');
       assert.ok(Math.abs(party.valueX - parties[0].valueX) <= 1, 'party values align');
     }
-    assert.ok(await page.locator('#printDocument .print-application').first().evaluate(element => element.firstElementChild.classList.contains('print-highlights') && element.firstElementChild.textContent.includes('TEST preparation and application methodology.')), 'highlights appear first without a service heading');
-    assert.match(text, /Waterproofing scope for automated verification only\./);
+    const application = await page.locator('#printDocument .print-application').first().evaluate(element => [...element.children].map(field => ({
+      className: field.className,
+      label: field.querySelector('.print-application-label').textContent.trim(),
+      value: field.querySelector('.print-application-value').textContent.trim()
+    })));
+    assert.deepEqual(application.map(field => field.label), ['Scope details', 'Application highlights']);
+    assert.deepEqual(application.map(field => field.className.includes('print-scope') || field.className.includes('print-highlights')), [true, true]);
+    assert.match(application[0].value, /Waterproofing scope for automated verification only\./);
+    assert.match(application[1].value, /TEST preparation and application methodology\./);
     const pagesBefore = await page.locator('#printDocument .print-page').count();
     const textBefore = await page.locator('#printDocument').innerText();
     await page.evaluate(() => { dispatchEvent(new Event('beforeprint')); dispatchEvent(new Event('beforeprint')); });

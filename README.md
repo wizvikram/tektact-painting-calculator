@@ -28,10 +28,10 @@ The original calculator remains at <http://localhost:8000/index.html>.
    footers. Save as PDF.
 
 The customer-approved print composition shows the formatted date directly and
-aligned Contractor / Client / Kind Attn. details. The selected service heading is
-not printed. Editable application highlights lead the application section, with
-scope text following without a separate heading. The service selector remains in
-the editor for the service-specific measurements. The customer phone field is removed.
+aligned Contractor / Client / Kind Attn. details. The application section prints
+Scope details followed by Application highlights. The service selector remains
+internal to the editor for service-specific measurements and is not printed. The
+customer phone field is removed.
 Sections spread vertically on A4 with readable specifications, separately spaced
 totals, amount in words and terms. Every page reserves the actual office/contact
 footer height and a clear gap. Long descriptions and terms continue onto additional

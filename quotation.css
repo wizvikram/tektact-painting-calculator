@@ -130,3 +130,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .print-page { break-after: page; break-inside: avoid; }
   .print-page:last-child { break-after: auto; }
 }
+
+/* Optional authenticated Command Center integration panel. */
+.crm-panel { margin: 18px auto; max-width: 1100px; padding: 18px; border: 1px solid #d8ddd4; border-radius: 12px; background: #f8faf7; }
+.crm-panel h2 { margin: 0 0 6px; font-size: 1.05rem; }
+.crm-panel .muted, .crm-status { color: #5d665d; font-size: .88rem; line-height: 1.5; }
+.crm-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: end; margin-top: 12px; }
+.crm-controls label { display: grid; gap: 5px; font-size: .82rem; font-weight: 600; }
+.crm-controls input, .crm-controls select { min-width: 0; width: 100%; padding: 9px; border: 1px solid #cbd2c8; border-radius: 7px; background: white; }
+.crm-controls button { min-height: 38px; padding: 8px 12px; border: 0; border-radius: 7px; background: #28342b; color: white; cursor: pointer; }
+.crm-controls button:disabled { opacity: .5; cursor: not-allowed; }
+.crm-status { margin: 10px 0 0; }
+@media (max-width: 650px) { .crm-controls { grid-template-columns: 1fr; } }

@@ -170,3 +170,18 @@ For example, a 20% margin means profit is 20% of the quotation. All money is sho
 - `index.html` contains the calculator layout and input fields.
 - `styles.css` contains the colors, spacing, and responsive layouts.
 - `app.js` validates inputs and calculates the estimate.
+
+## Save a quotation to TEKTACT Command Center (local)
+
+The quotation editor now has an optional **Save quotation to TEKTACT Command Center** panel. It does not replace printing or saving the customer PDF.
+
+1. Start the Command Center and PostgreSQL on the same Windows computer. In the same browser profile, sign in as Admin at `http://localhost:3000/login`.
+2. Start this calculator folder using `python -m http.server 8000` and open `http://localhost:8000/quotation.html`. Do not open the HTML as a `file://` URL.
+3. Keep the CRM URL as `http://localhost:3000`, choose **Connect / Load customers**, then select an existing customer and the matching enquiry.
+4. Enter the internal quotation reference and complete the customer quotation. Select **Save quotation to CRM**. The record is created as DRAFT; the customer PDF can still be printed separately.
+
+The Command Center's local `.env` must allow this exact browser origin using `QUOTATION_INTEGRATION_ORIGINS="http://localhost:8000"`. The API uses the signed-in Admin session and credentialed CORS. If the request reports an origin error, check that setting and restart the CRM server. If it reports that you are not signed in, open the CRM login page in the same browser profile and try again.
+
+CRM quantity storage supports three decimal places and unit rates support two. The save action will reject a quotation row with greater precision rather than silently changing its quantity or rate. The customer PDF remains available and can be saved even when CRM is offline.
+
+Only customer-facing quotation fields are sent. Internal material cost, labour cost, expenses, profit and margin are excluded. Existing CRM customers and enquiries must be selected; this tool does not create CRM records automatically. This local integration is not available from the public GitHub Pages origin.

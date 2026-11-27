@@ -289,6 +289,143 @@ function syncPrintContent() {
   }
 }
 
+
+const crmState = { customers: [], leads: [] };
+
+function crmBaseUrl() {
+  const raw = $("crmUrl").value.trim();
+  const parsed = new URL(raw);
+  if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("Enter a valid Command Center URL.");
+  if (parsed.protocol === "http:" && !["localhost", "127.0.0.1"].includes(parsed.hostname)) {
+    throw new Error("Use HTTPS for a non-local Command Center address.");
+  }
+  return parsed.origin;
+}
+
+async function crmRequest(method, payload) {
+  const base = crmBaseUrl();
+  const response = await fetch(base + "/api/integrations/quotations", {
+    method,
+    credentials: "include",
+    headers: payload ? { "Content-Type": "application/json" } : undefined,
+    body: payload ? JSON.stringify(payload) : undefined,
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("Not signed in. Open " + base + "/login in this browser, sign in as Admin, then load customers again.");
+    throw new Error(result.error || "Command Center request failed (" + response.status + ").");
+  }
+  return result;
+}
+
+function refreshCrmLeads() {
+  const customerId = $("crmCustomer").value;
+  const select = $("crmLead");
+  select.replaceChildren();
+  const placeholder = document.createElement("option");
+  placeholder.value = "";
+  placeholder.textContent = customerId ? "Choose an enquiry" : "Choose a customer first";
+  select.append(placeholder);
+  crmState.leads.filter((lead) => lead.customerId === customerId).forEach((lead) => {
+    const option = document.createElement("option");
+    option.value = lead.id;
+    option.textContent = lead.title + " (" + lead.serviceType + ")";
+    select.append(option);
+  });
+  select.disabled = !customerId;
+  $("saveCrm").disabled = !customerId || !select.value;
+}
+
+async function loadCrmOptions() {
+  const button = $("loadCrmOptions");
+  button.disabled = true;
+  $("crmStatus").textContent = "Connecting to Command Center…";
+  try {
+    const result = await crmRequest("GET");
+    crmState.customers = result.customers || [];
+    crmState.leads = result.leads || [];
+    const select = $("crmCustomer");
+    select.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose an existing CRM customer";
+    select.append(placeholder);
+    crmState.customers.forEach((customer) => {
+      const option = document.createElement("option");
+      option.value = customer.id;
+      option.textContent = customer.displayName;
+      select.append(option);
+    });
+    select.disabled = false;
+    $("crmLead").disabled = true;
+    $("crmStatus").textContent = crmState.customers.length
+      ? "Connected. Choose the customer and its matching enquiry."
+      : "Connected, but no customers with enquiries are available. Create the enquiry in CRM first.";
+    refreshCrmLeads();
+  } catch (error) {
+    $("crmStatus").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function decimalPlaces(value) {
+  const text = String(value).trim();
+  return (text.split(".")[1] || "").length;
+}
+
+async function saveQuotationToCrm() {
+  const button = $("saveCrm");
+  button.disabled = true;
+  $("crmStatus").textContent = "Validating and saving customer-facing quotation…";
+  try {
+    if (!validateQuotation()) throw new Error("Complete the required quotation and client fields first.");
+    const referenceNumber = $("reference").value.trim();
+    if (!referenceNumber) throw new Error("Enter an internal quotation reference before saving to CRM.");
+    if (!$("crmCustomer").value || !$("crmLead").value) throw new Error("Select both a CRM customer and its linked enquiry.");
+    const rows = [...$("items").rows];
+    if (!rows.length) throw new Error("Add at least one quotation line item.");
+    for (const row of rows) {
+      if (decimalPlaces(row.querySelector(".qty").value) > 3) throw new Error("CRM stores quantity to 3 decimal places. Adjust the highlighted quotation quantity precision before saving.");
+      if (decimalPlaces(row.querySelector(".rate").value) > 2) throw new Error("CRM stores unit rates to 2 decimal places. Adjust the quotation rate precision before saving.");
+    }
+    const calculation = core.calculateQuote(readItems());
+    const lineItems = rows.map((row, index) => ({
+      description: row.querySelector(".desc").value.trim() || "Quotation item " + (index + 1),
+      unit: row.querySelector(".unit").value.trim() || "UNIT",
+      quantity: String(row.querySelector(".qty").value),
+      unitRate: Number(row.querySelector(".rate").value).toFixed(2),
+      lineTotal: calculation.items[index].amount.toFixed(2),
+    }));
+    const serviceMap = { Painting: "PAINTING", Waterproofing: "WATERPROOFING", Flooring: "FLOORING" };
+    const payload = {
+      referenceNumber,
+      customerId: $("crmCustomer").value,
+      leadId: $("crmLead").value,
+      serviceType: serviceMap[$("service").value],
+      quotationDate: $("date").value,
+      status: "DRAFT",
+      quotedAmount: calculation.total.toFixed(2),
+      scope: $("scope").value.trim(),
+      highlights: $("highlights").value.trim(),
+      terms: $("terms").value.trim(),
+      lineItems,
+    };
+    const result = await crmRequest("POST", payload);
+    $("crmStatus").textContent = "Saved to Command Center. Quotation ID: " + result.quotationId + " (Revision " + result.version + "). PDF printing remains available separately.";
+  } catch (error) {
+    $("crmStatus").textContent = error.message;
+    button.disabled = false;
+  }
+}
+
+$("loadCrmOptions").addEventListener("click", loadCrmOptions);
+$("crmCustomer").addEventListener("change", refreshCrmLeads);
+$("crmLead").addEventListener("change", () => {
+  $("saveCrm").disabled = !$("crmLead").value;
+});
+$("saveCrm").addEventListener("click", saveQuotationToCrm);
+
 function importCalculatorEstimate() {
   const params = new URLSearchParams(location.search);
   if (!params.has("area") && !params.has("quote")) return false;

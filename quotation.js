@@ -390,6 +390,9 @@ async function saveQuotationToCrm() {
       if (decimalPlaces(row.querySelector(".rate").value) > 2) throw new Error("CRM stores unit rates to 2 decimal places. Adjust the quotation rate precision before saving.");
     }
     const calculation = core.calculateQuote(readItems());
+    if (rows.some((row) => row.querySelector(".desc").value.trim().length > 240)) {
+      throw new Error("CRM line item descriptions support up to 240 characters. Shorten the long item description before saving.");
+    }
     const lineItems = rows.map((row, index) => ({
       description: row.querySelector(".desc").value.trim() || "Quotation item " + (index + 1),
       unit: row.querySelector(".unit").value.trim() || "UNIT",

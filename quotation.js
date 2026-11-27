@@ -313,7 +313,8 @@ async function crmRequest(method, payload) {
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401) throw new Error("Not signed in. Open " + base + "/login in this browser, sign in as Admin, then load customers again.");
-    throw new Error(result.error || "Command Center request failed (" + response.status + ").");
+    const details = result.details ? " Details: " + JSON.stringify(result.details) : "";
+    throw new Error((result.error || "Command Center request failed (" + response.status + ").") + details);
   }
   return result;
 }

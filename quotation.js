@@ -383,6 +383,13 @@ async function saveQuotationToCrm() {
     const referenceNumber = $("reference").value.trim();
     if (!referenceNumber) throw new Error("Enter an internal quotation reference before saving to CRM.");
     if (!$("crmCustomer").value || !$("crmLead").value) throw new Error("Select both a CRM customer and its linked enquiry.");
+    const serviceMap = { Painting: "PAINTING", Waterproofing: "WATERPROOFING", Flooring: "FLOORING" };
+    const selectedLead = crmState.leads.find((lead) => lead.id === $("crmLead").value);
+    if (!selectedLead) throw new Error("Reconnect to Command Center and select an enquiry again.");
+    if (selectedLead.serviceType !== serviceMap[$("service").value]) {
+      const serviceName = { PAINTING: "Painting", WATERPROOFING: "Waterproofing", FLOORING: "Flooring" }[selectedLead.serviceType] || "the selected service";
+      throw new Error("This enquiry is for " + serviceName + ". Match the quotation service before saving.");
+    }
     const rows = [...$("items").rows];
     if (!rows.length) throw new Error("Add at least one quotation line item.");
     for (const row of rows) {
@@ -400,7 +407,6 @@ async function saveQuotationToCrm() {
       unitRate: Number(row.querySelector(".rate").value).toFixed(2),
       lineTotal: calculation.items[index].amount.toFixed(2),
     }));
-    const serviceMap = { Painting: "PAINTING", Waterproofing: "WATERPROOFING", Flooring: "FLOORING" };
     const payload = {
       referenceNumber,
       customerId: $("crmCustomer").value,
